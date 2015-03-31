@@ -145,7 +145,6 @@ pkeystruct key[] =
   {"WRITE_XML", P_BOOL, &prefs.xml_flag},
   {"XML_NAME", P_STRING, prefs.xml_name},
   {"XSL_URL", P_STRING, prefs.xsl_name},
-  {"TILE_COMPRESS", P_BOOL, &prefs.tile_compress_flag},
   {""}
  };
 
@@ -276,7 +275,6 @@ char *default_prefs[] =
 #endif
 "*NOPENFILES_MAX         512             # Maximum number of files opened by "
 					BANNER,
-"TILE_COMPRESS          N               # Write tile compressed output image (Y/N)?",
 ""
  };
 

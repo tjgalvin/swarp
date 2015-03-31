@@ -7,7 +7,7 @@
 *
 *	This file part of:	SWarp
 *
-*	Copyright:		(C) 2000-2014 Emmanuel Bertin -- IAP/CNRS/UPMC
+*	Copyright:		(C) 2000-2013 Emmanuel Bertin -- IAP/CNRS/UPMC
 *
 *	License:		GNU General Public License
 *
@@ -22,7 +22,7 @@
 *	You should have received a copy of the GNU General Public License
 *	along with SWarp. If not, see <http://www.gnu.org/licenses/>.
 *
-*	Last modified:		19/08/2014
+*	Last modified:		06/06/2013
 *
 *%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%*/
 
@@ -112,8 +112,7 @@ fieldstruct	*load_field(catstruct *cat, int frameno, int fieldno)
   if (tab->naxis<1)
     error(EXIT_FAILURE, "*Error*: Zero-dimensional table in ",field->filename);
 
-/* Force data to be at least 2D (CFITSIO: Note, only valid when NOT tile compressed) */
-  if(!tab->isTileCompressed)
+/* Force data to be at least 2D */
   if (tab->naxis<2)
     {
     tab->naxis = 2;
@@ -242,8 +241,6 @@ VERSION	16/04/2000
 void	end_field(fieldstruct *field)
 
   {
-  //close_cfitsio(field->cat); CFITSIO this now being down in closeTileCompressedFile() in coadd.c
-
 /* Check first that a tab structure is present */
   if (field->tab)
     {
@@ -364,7 +361,7 @@ INPUT	Input field ptr array,
 OUTPUT	Pointer to the new output field.
 NOTES   Global preferences are used.
 AUTHOR  E. Bertin (IAP)
-VERSION 19/08/2014
+VERSION 06/06/2013
  ***/
 fieldstruct *init_field(fieldstruct **infield, int ninput, char *filename)
   {
@@ -509,29 +506,16 @@ fieldstruct *init_field(fieldstruct **infield, int ninput, char *filename)
               {
               wcsmin2 = infield[i]->wcs->wcsmin[axis[i*naxis+n]];
               wcsmax2 = infield[i]->wcs->wcsmax[axis[i*naxis+n]];
-/*------------ Test for the lower and upper limits */
-              if (lng==lat || n!=lng)
-                {
-                if (wcsmin1>wcsmin2)
-                  countmin++;
-                if (wcsmax2>wcsmin1)
-                  countmin++;
-                if (wcsmax2>wcsmax1)
-                  countmax++;
-                if (wcsmax1>wcsmin2)
-                  countmax++;
-                }
-              else
-                {
-                if (fcmp_0_p360(wcsmin1, wcsmin2))
-                  countmin++;
-                if (fcmp_0_p360(wcsmax2, wcsmin1))
-                  countmin++;
-                if (fcmp_0_p360(wcsmax2, wcsmax1))
-                  countmax++;
-                if (fcmp_0_p360(wcsmax1, wcsmin2))
-                  countmax++;
-                }
+/*------------ Test for the lower limit */
+              if ((n==lng && fcmp_0_p360(wcsmin1, wcsmin2)) || wcsmin1>wcsmin2)
+                countmin++;
+              if ((n==lng && fcmp_0_p360(wcsmax2, wcsmin1)) || wcsmax2>wcsmin1)
+                countmin++;
+/*------------ Test for the upper limit */
+              if ((n==lng && fcmp_0_p360(wcsmax2, wcsmax1)) || wcsmax2>wcsmax1)
+                countmax++;
+              if ((n==lng && fcmp_0_p360(wcsmax1, wcsmin2)) || wcsmax1>wcsmin2)
+                countmax++;
               }
 
 /*---------- Update the "most intersecting" limits */
@@ -547,7 +531,7 @@ fieldstruct *init_field(fieldstruct **infield, int ninput, char *filename)
               }
             }
           wcs->crval[n] = (wcsmin[n]+wcsmax[n])/2.0;
-          if (lat!=lng && n==lng)
+          if (n==lng)
             wcs->crval[n] = wcsmax[n]>wcsmin[n]? fmod_0_p360(wcs->crval[n])
 					: fmod_0_p360(wcs->crval[n] - 180.0);
           break;
@@ -559,21 +543,12 @@ fieldstruct *init_field(fieldstruct **infield, int ninput, char *filename)
             {
             wcsmin2 = infield[i]->wcs->wcsmin[axis[i*naxis+n]];
             wcsmax2 = infield[i]->wcs->wcsmax[axis[i*naxis+n]];
-/*---------- Test for the lower and upper limits */
-            if (lng==lat || n!=lng)
-              {
-              if (wcsmin[n]>wcsmin2)
-                wcsmin[n] = wcsmin2;
-              if (wcsmax2>wcsmax[n])
-                wcsmax[n] = wcsmax2;
-              }
-            else
-              {
-              if (fcmp_0_p360(wcsmin[n],wcsmin2))
-                wcsmin[n] = wcsmin2;
-              if (fcmp_0_p360(wcsmax2,wcsmax[n]))
-                wcsmax[n] = wcsmax2;
-              }
+/*---------- Test for the lower limit */
+            if ((n==lng && fcmp_0_p360(wcsmin[n],wcsmin2)) || wcsmin[n]>wcsmin2)
+              wcsmin[n] = wcsmin2;
+/*---------- Test for the upper limit */
+            if ((n==lng && fcmp_0_p360(wcsmax2,wcsmax[n])) || wcsmax2>wcsmax[n])
+              wcsmax[n] = wcsmax2;
             }
           wcs->crval[n] = (wcsmin[n]+wcsmax[n])/2.0;
           if (n==lng)
@@ -588,21 +563,12 @@ fieldstruct *init_field(fieldstruct **infield, int ninput, char *filename)
             {
             wcsmin2 = infield[i]->wcs->wcsmin[axis[i*naxis+n]];
             wcsmax2 = infield[i]->wcs->wcsmax[axis[i*naxis+n]];
-/*---------- Test for the lower and upper limits */
-            if (lng==lat || n!=lng)
-              {
-              if (wcsmin[n]>wcsmin2)
-                wcsmin[n] = wcsmin2;
-              if (wcsmax2>wcsmax[n])
-                wcsmax[n] = wcsmax2;
-              }
-            else
-              {
-              if (fcmp_0_p360(wcsmin[n],wcsmin2))
-                wcsmin[n] = wcsmin2;
-              if (fcmp_0_p360(wcsmax2,wcsmax[n]))
-                wcsmax[n] = wcsmax2;
-              }
+/*---------- Test for the lower limit */
+            if ((n==lng && fcmp_0_p360(wcsmin[n],wcsmin2)) || wcsmin[n]>wcsmin2)
+              wcsmin[n] = wcsmin2;
+/*---------- Test for the upper limit */
+            if ((n==lng && fcmp_0_p360(wcsmax2,wcsmax[n])) || wcsmax2>wcsmax[n])
+              wcsmax[n] = wcsmax2;
             }
 /*-------- Handled swapped ra, dec axes (e.g. SDSS) */
           npstr = n;
@@ -615,7 +581,7 @@ fieldstruct *init_field(fieldstruct **infield, int ninput, char *filename)
             }
           pstr = prefs.image_center[npstr];
   	  wcs->crval[n] = strchr(pstr, ':') ?
-			((lat!=lng && n==lng)?sextodegal(pstr):sextodegde(pstr))
+			  (n==lng?sextodegal(pstr):sextodegde(pstr))
 			: atof(pstr);
          break;
 

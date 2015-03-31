@@ -162,7 +162,6 @@ typedef struct
   char		sdate_end[12];		/* SWarp end date */
   char		stime_end[12];		/* SWarp end time */
   double	time_diff;		/* Execution time */
-  int		tile_compress_flag;	/* Write tile-compressed output file? */
   }	prefstruct;
 
 prefstruct	prefs;

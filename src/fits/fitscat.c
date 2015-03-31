@@ -165,30 +165,6 @@ int	close_cat(catstruct *cat)
   return RETURN_OK;
   }
 
-/****** close_cfitsio **************************************************************
-
-Closes a file previously opened by cfitsio 
-
-***/
-int	close_cfitsio(fitsfile *infptr)
-{
-
-	if (infptr != NULL) {
-
-		int status = 0; fits_close_file(infptr, &status);
-		if (status != 0) {
-			fits_report_error(stderr, status);
-			printf("ERROR could not close FITS file with cfitsio\n");
-		}
-		else {
-			//printf("Successfully closed FITS file with cfitsio\n");
-			infptr == NULL;
-		}
-	}
-	else {
-	    //printf("ERROR no cfitsio file to close\n");
-	}
-}
 
 /****** free_cat ***************************************************************
 PROTO	void free_cat(catstruct **cat, int ncat)
@@ -347,51 +323,14 @@ int	map_cat(catstruct *cat)
   QCALLOC(tab, tabstruct, 1);
   tab->cat = cat;
   QFTELL(cat->file, tab->headpos, cat->filename);
-
-   // CFITSIO
-   fitsfile *infptr;
-   int status, hdutype, hdunum;
-   status = 0; fits_open_file(&infptr, cat->filename, READONLY, &status);
-   if (status != 0) {
-     fits_report_error(stderr, status);
-     printf("ERROR could not open FITS file with cfitsio: %s\n", cat->filename);
-   }
-   hdunum = 1;
-
-  int any_tile_compressed = 0;
   for (ntab=0; !get_head(tab); ntab++)
     {
     readbasic_head(tab);
     readbintabparam_head(tab);
     QFTELL(cat->file, tab->bodypos, cat->filename);
     tab->nseg = tab->seg = 1;
-
-    // CFITSIO
-    if (tab->isTileCompressed) {
-
-      any_tile_compressed = 1;
-      tab->hdunum = hdunum;
-      tab->infptr = infptr;
-
-      status = 0; fits_movabs_hdu(tab->infptr, tab->hdunum, &hdutype, &status);
-      if (status != 0) printf("ERROR could not move to hdu %d in file %s\n", tab->hdunum, cat->filename);
-      //tab->tabsize = infptr->Fptr->rowlength;
-
-      //printf("TABSIZE = %ld\n", tab->tabsize);
-    }
-    else {
-
-      tab->infptr = NULL;
-    }
-
-    if (tab->tabsize) {
-
-      // IMPORTANT: moving to start of next header using fseek and cfitsio position rather than table size, as done previously
-      fseek(cat->file, infptr->Fptr->headstart[hdunum], SEEK_SET);
-
-      // this is how it was done previously
-      //QFSEEK(cat->file, PADTOTAL(tab->tabsize), SEEK_CUR, cat->filename);
-    }
+    if (tab->tabsize)
+      QFSEEK(cat->file, PADTOTAL(tab->tabsize), SEEK_CUR, cat->filename);
     if (prevtab)
       {
       tab->prevtab = prevtab;
@@ -403,14 +342,7 @@ int	map_cat(catstruct *cat)
     QCALLOC(tab, tabstruct, 1);
     tab->cat = cat;
     QFTELL(cat->file, tab->headpos, cat->filename);
-
-    // CFITSIO
-    hdunum++;
     }
-
-  // we will not need CFitsIO, so close CFitsIO file pointer now
-  if (!any_tile_compressed)
-    close_cfitsio(infptr);
 
   cat->ntab = ntab;
   free(tab);
