@@ -54,9 +54,9 @@ int		weight_type, weight_width, weight_y;
 
 /******* load_weight *********************************************************
 PROTO	fieldstruct load_weight(catstruct *cat, fieldstruct *reffield,
-			int frameno, weightenum wtype)
+			int frameno, int fieldno, weightenum wtype)
 PURPOSE	Load a weight-map field
-INPUT	Cat structurep pointer,
+INPUT	Cat structure pointer,
 	Reference field pointer,
 	FITS extension no,
 	Weight type.

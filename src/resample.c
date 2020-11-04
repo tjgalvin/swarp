@@ -93,11 +93,13 @@ static void		warp_line(int p);
 
 /****** resample_field *******************************************************
 PROTO	void resample_field(fieldstruct **pinfield, fieldstruct **pinwfield,
+			fieldstruct **pindgeofield,
 			fieldstruct *outfield, fieldstruct *outwfield,
 			interpenum *interptype)
 PURPOSE	Resample an image.
 INPUT	Input pointer to field structure pointer,
-	Input pointer weight-map field structure pointer,
+	Input pointer to weight-map field structure pointers,
+	Input pointer to dgeo map field structure pointers,
 	Output total field structure pointer,
 	Output total weight-map field structure pointer,
 	Interpolation type.
@@ -106,9 +108,10 @@ OUTPUT	-.
 NOTES	The structure pointers pointed by pinfield and and pinwfield are
 	updated and point to the resampled fields on output.
 AUTHOR	E. Bertin (IAP)
-VERSION	26/08/2020
+VERSION	04/11/2020
  ***/
 void	resample_field(fieldstruct **pinfield, fieldstruct **pinwfield,
+		fieldstruct **pindgeofield,
 		fieldstruct *outfield, fieldstruct *outwfield,
 		interpenum *interptype)
   {

@@ -249,7 +249,7 @@ INPUT	Pointer to the output file (or stream),
 OUTPUT	RETURN_OK if everything went fine, RETURN_ERROR otherwise.
 NOTES	-.
 AUTHOR	E. Bertin (IAP)
-VERSION	07/06/2011
+VERSION	04/11/2020
  ***/
 int	write_xml_meta(FILE *file, char *error)
   {
@@ -376,9 +376,11 @@ int	write_xml_meta(FILE *file, char *error)
   fprintf(file, "   <FIELD name=\"Frame_Index\" datatype=\"int\""
         " ucd=\"meta.record\"/>\n");
   fprintf(file, "   <FIELD name=\"Image_Name\" datatype=\"char\" arraysize=\"*\""
-	" ucd=\"obs.image;meta.fits\"/>\n");
+	" ucd=\"meta.id;meta.fits;obs.image\"/>\n");
   fprintf(file, "   <FIELD name=\"Weight_Name\" datatype=\"char\" arraysize=\"*\""
-	" ucd=\"obs.image;meta.fits\"/>\n");
+	" ucd=\"meta.id;meta.fits;obs.calib\"/>\n");
+  fprintf(file, "   <FIELD name=\"Dgeo_Name\" datatype=\"char\" arraysize=\"*\""
+	" ucd=\"meta.id;meta.fits;obs.calib\"/>\n");
   fprintf(file, "   <FIELD name=\"External_Header\" datatype=\"boolean\""
 	" ucd=\"meta.code;obs.param\"/>\n");
   fprintf(file, "   <FIELD name=\"Image_Ident\" datatype=\"char\""
@@ -405,14 +407,16 @@ int	write_xml_meta(FILE *file, char *error)
 	" ucd=\"obs.param\" unit=\"pix\"/>\n");
   fprintf(file, "   <FIELD name=\"Back_Default\" datatype=\"float\""
 	" ucd=\"obs.param\" unit=\"adu\"/>\n");
-  fprintf(file, "   <FIELD name=\"Weight_Type\" datatype=\"boolean\""
+  fprintf(file, "   <FIELD name=\"Weight_Type\" datatype=\"char\""
 	" arraysize=\"*\" ucd=\"stat.weight;meta.code\"/>\n");
-  fprintf(file, "   <FIELD name=\"Rescale_Weights\" datatype=\"char\""
+  fprintf(file, "   <FIELD name=\"Rescale_Weights\" datatype=\"boolean\""
 	" arraysize=\"*\" ucd=\"stat.weight;meta.code\"/>\n");
   fprintf(file, "   <FIELD name=\"Weight_Thresh\" datatype=\"float\""
 	" ucd=\"instr.sensitivity;obs.param\" unit=\"adu\"/>\n");
   fprintf(file, "   <FIELD name=\"Weight_Scaling\" datatype=\"float\""
 	" ucd=\"arith.factor;obs.image;stat.median\"/>\n");
+  fprintf(file, "   <FIELD name=\"Dgeo_Type\" datatype=\"char\""
+	" arraysize=\"*\" ucd=\"meta.code\"/>\n");
   fprintf(file, "   <FIELD name=\"Interpolate\" datatype=\"boolean\""
 	" ucd=\"meta.code;obs.param\"/>\n");
   fprintf(file, "   <FIELD name=\"Gain\" datatype=\"float\""
@@ -444,7 +448,8 @@ int	write_xml_meta(FILE *file, char *error)
     x = &xmlstack[n];
     f = x->fieldno;
     fprintf(file, "    <TR>\n"
-	"     <TD>%d</TD><TD>%s</TD><TD>%s</TD><TD>%c</TD><TD>%s</TD>\n"
+	"     <TD>%d</TD><TD>%s</TD><TD>%s</TD><TD>%s</TD\n"
+	"     <TD>%c</TD><TD>%s</TD>\n"
 	"     <TD>%d</TD><TD>%s</TD><TD>%s</TD><TD>%.2f</TD>\n"
 	"     <TD>%g</TD><TD>%g</TD><TD>%c</TD><TD>%s</TD>"
 	"<TD>%d</TD><TD>%d</TD><TD>%g</TD>\n"
@@ -455,6 +460,8 @@ int	write_xml_meta(FILE *file, char *error)
 	prefs.infield_name[f],
 	(prefs.inwfield_name[f] && *prefs.inwfield_name[f])?
 		prefs.inwfield_name[f] : "(null)",
+	(prefs.indgeo_name[f] && *prefs.indgeo_name[f])?
+		prefs.indgeo_name[f] : "(null)",
         x->headflag? 'T' : 'F',
 	(x->ident && *(x->ident)) ? x->ident : "(null)",
 	x->extension,
@@ -474,6 +481,8 @@ int	write_xml_meta(FILE *file, char *error)
         prefs.wscale_flag[f]? 'T' : 'F',
 	x->weight_thresh,
 	x->sigfac,
+    	key[findkeys("DGEO_TYPE", keylist,
+		FIND_STRICT)].keylist[prefs.dgeo_type[f]],
         prefs.interp_flag[f]? 'T' : 'F',
 	x->gain,
 	x->saturation,
@@ -568,6 +577,10 @@ int	write_xml_meta(FILE *file, char *error)
 	"   <PARAM name=\"Weight_Suffix\" datatype=\"char\" arraysize=\"*\""
 	" ucd=\"meta.dataset;meta.file\" value=\"%s\"/>\n",
 	prefs.weight_suffix);
+    fprintf(file,
+	"   <PARAM name=\"DGeo_Suffix\" datatype=\"char\" arraysize=\"*\""
+	" ucd=\"meta.dataset;meta.file\" value=\"%s\"/>\n",
+	prefs.dgeo_suffix);
     fprintf(file,
 	"   <PARAM name=\"Combine\" datatype=\"boolean\""
 	" ucd=\"meta.code\" value=\"%c\"/>\n",
@@ -775,6 +788,11 @@ int	write_xml_meta(FILE *file, char *error)
 	" ucd=\"meta.code\" value=\"%s\"/>\n",
     	key[findkeys("VERBOSE_TYPE", keylist,
 			FIND_STRICT)].keylist[prefs.verbose_type]);
+    fprintf(file,
+	"   <PARAM name=\"NOpenFiles_Max\" datatype=\"int\""
+	" ucd=\"meta.number;stat.max\" value=\"%d\"/>\n",
+	prefs.nopenfiles_max);
+
     }
 
   fprintf(file, "  </RESOURCE>\n");
