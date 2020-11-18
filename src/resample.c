@@ -22,7 +22,7 @@
 *	You should have received a copy of the GNU General Public License
 *	along with SWarp. If not, see <http://www.gnu.org/licenses/>.
 *
-*	Last modified:		26/08/2020
+*	Last modified:		18/11/2020
 *
 *%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%*/
 
@@ -68,7 +68,7 @@
  int			nproc;
 #endif
 
- fieldstruct		*infield,*inwfield, *field, *wfield;
+ fieldstruct		*infield, *inwfield, *indgeofield, *field, *wfield;
  ikernelstruct		**ikernel;
  wcsstruct		**wcsinp, **wcsoutp;
  projappstruct		*projapp;
@@ -108,7 +108,7 @@ OUTPUT	-.
 NOTES	The structure pointers pointed by pinfield and and pinwfield are
 	updated and point to the resampled fields on output.
 AUTHOR	E. Bertin (IAP)
-VERSION	04/11/2020
+VERSION	18/11/2020
  ***/
 void	resample_field(fieldstruct **pinfield, fieldstruct **pinwfield,
 		fieldstruct **pindgeofield,
@@ -131,6 +131,7 @@ void	resample_field(fieldstruct **pinfield, fieldstruct **pinwfield,
 
   infield = *pinfield;
   inwfield = *pinwfield;
+  indgeofield = *pindgeofield;
 
 /* Create new file name */
   strcpy(filename2, infield->rfilename);
@@ -624,7 +625,7 @@ INPUT	Thread number.
 OUTPUT	-.
 NOTES	-.
 AUTHOR	E. Bertin (IAP)
-VERSION	26/08/2020
+VERSION	18/11/2020
  ***/
 void	warp_line(int p)
   {
@@ -724,8 +725,8 @@ void	warp_line(int p)
           if (rawbufareac)
             area = *(rawbufareac++);
           if (*rawbufc != WCS_NOCOORD
-		&& interpolate_ipix(infield, inwfield, rawbufc,&ipix,&ipixw)
-			== RETURN_OK)
+		&& interpolate_ipix(infield, inwfield, indgeofield, rawbufc,
+			&ipix,&ipixw) == RETURN_OK)
             {
             *(oversampit++) |= ipix;
             *(oversampwit++) |= 1;
@@ -751,8 +752,8 @@ void	warp_line(int p)
           if (rawbufareac)
             area = *(rawbufareac++);
           if (*rawbufc != WCS_NOCOORD
-		&& (interpolate_pix(infield, inwfield, ikernel[p],rawbufc,
-			&pix,&pixw),pixw<BIG))
+		&& (interpolate_pix(infield, inwfield, indgeofield, ikernel[p],
+			rawbufc, &pix,&pixw),pixw<BIG))
             {
             *(oversampt++) += area * (double)pix;
             *(oversampwt++) += (double)pixw * area*area;
@@ -855,7 +856,8 @@ void	warp_line(int p)
         if (rawbufareac)
           area = *(rawbufareac++);
         if (*rawbufc != WCS_NOCOORD)
-          interpolate_ipix(infield, inwfield, rawbufc,outi++,outwi++);
+          interpolate_ipix(infield, inwfield, indgeofield, rawbufc,
+          	outi++, outwi++);
         else
           *(outwi++) = *(outi++) = 0;
         }
@@ -866,7 +868,8 @@ void	warp_line(int p)
           area = *(rawbufareac++);
         if (*rawbufc != WCS_NOCOORD)
           {
-          interpolate_pix(infield, inwfield, ikernel[p], rawbufc,out,outw);
+          interpolate_pix(infield, inwfield, indgeofield, ikernel[p], rawbufc,
+          	out,outw);
           *(out++) *= area;
 /*------- Convert variance to weight */
           *outw = (*outw < BIG) ? 1.0/(*outw*area*area) : 0.0;

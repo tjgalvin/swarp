@@ -23,7 +23,7 @@
 *	along with AstrOmatic software.
 *	If not, see <http://www.gnu.org/licenses/>.
 *
-*	Last modified:		26/08/2020
+*	Last modified:		18/11/2020
 *
 *%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%*/
 
@@ -64,13 +64,13 @@ INPUT	Table (tab) structure.
 OUTPUT	Pointer to the mapped data if OK, or NULL otherwise.
 NOTES	The file pointer must be positioned at the beginning of the data.
 AUTHOR	E. Bertin (IAP)
-VERSION	02/10/2017
+VERSION	18/11/2020
  ***/
 PIXTYPE	*alloc_body(tabstruct *tab, void (*func)(PIXTYPE *ptr, int npix))
   {
    FILE		*file;
    PIXTYPE	*buffer;
-   size_t	npix, size, sizeleft, spoonful;
+   size_t	n, npix, size, sizeleft, spoonful;
 
   if (!body_ramflag)
     {
@@ -90,7 +90,9 @@ PIXTYPE	*alloc_body(tabstruct *tab, void (*func)(PIXTYPE *ptr, int npix))
 
 /* Decide if the data will go in physical memory or on swap-space */
 #ifdef	HAVE_CFITSIO
-  npix = tab->naxisn[0] * tab->naxisn[1];
+  npix = 1;
+  for (n=0; n<tab->naxis; n++)
+    npix *= tab->naxisn[n];
 #else
   npix = tab->tabsize/tab->bytepix;
 #endif
@@ -173,14 +175,14 @@ INPUT	Table (tab) structure.
 OUTPUT	Pointer to the mapped data if OK, or NULL otherwise.
 NOTES	The file pointer must be positioned at the beginning of the data.
 AUTHOR	E. Bertin (IAP)
-VERSION	02/10/2017
+VERSION	18/11/2020
  ***/
 FLAGTYPE	*alloc_ibody(tabstruct *tab,
 			void (*func)(FLAGTYPE *ptr, int npix))
   {
    FILE		*file;
    FLAGTYPE	*buffer;
-   size_t	npix, size, sizeleft, spoonful;
+   size_t	n, npix, size, sizeleft, spoonful;
 
   if (!body_ramflag)
     {
@@ -199,7 +201,13 @@ FLAGTYPE	*alloc_ibody(tabstruct *tab,
 			tab->extname);
 
 /* Decide if the data will go in physical memory or on swap-space */
+#ifdef	HAVE_CFITSIO
+  npix = 1;
+  for (n=0; n<tab->naxis; n++)
+    npix *= tab->naxisn[n];
+#else
   npix = tab->tabsize/tab->bytepix;
+#endif
   size = npix*sizeof(FLAGTYPE);
   if (size < body_ramleft)
     {
