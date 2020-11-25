@@ -22,7 +22,7 @@
 *	You should have received a copy of the GNU General Public License
 *	along with SWarp. If not, see <http://www.gnu.org/licenses/>.
 *
-*	Last modified:		28/10/2020
+*	Last modified:		25/11/2020
 *
 *%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%*/
 
@@ -191,7 +191,7 @@ char *default_prefs[] =
 "                                       # (all or for each weight-map)",
 "*WEIGHT_THRESH                         # Bad pixel weight-threshold",
 " ",
-"*#----------------------- Differential Geometry Map ---------------------------",
+"*#----------------------- Differential Geometry Maps ---------------------------",
 "*",
 "*DGEO_TYPE              NONE            # Differential geometry map type: NONE",
 "*                                       # or PIXEL",
