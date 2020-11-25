@@ -22,7 +22,7 @@
 *	You should have received a copy of the GNU General Public License
 *	along with SWarp. If not, see <http://www.gnu.org/licenses/>.
 *
-*	Last modified:		26/08/2020
+*	Last modified:		25/11/2020
 *
 *%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%*/
 
@@ -324,6 +324,9 @@ void	makeit(void)
         NFPRINTF(OUTPUT, gstr)
         resample_field(&infield[k], &inwfield[k],  &indgeofield[k],
         	outfield, outwfield, prefs.resamp_type);
+/*------ Free only dgeofields (fields and weight fields left for later) */
+        if (indgeofield[k])
+          end_field(indgeofield[k]);
         }
       thetime2 = time(NULL);
       tm = localtime(&thetime2);
@@ -336,6 +339,8 @@ void	makeit(void)
         update_xml(infield[k], inwfield[k]);
       }
     }
+
+  free(indgeofield);
 
   if (!prefs.combine_flag)
     goto the_end;
@@ -380,13 +385,10 @@ the_end:
     end_field(infield[k]);
     if (inwfield[k])
       end_field(inwfield[k]);
-    if (indgeofield[k])
-      end_field(indgeofield[k]);
     }
   free(next);
   free(infield);
   free(inwfield);
-  free(indgeofield);
 
   end_field(outfield);
   end_field(outwfield);
